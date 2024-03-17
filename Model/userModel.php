@@ -26,16 +26,28 @@ class UserModel {
     }
 
     public function createUser($name, $surname, $email)
-{
-    $stmt = $this->db->prepare("INSERT INTO users (name, surname, email) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $name, $surname, $email);
-    $result = $stmt->execute();
-    if (!$result) {
-        // Log the error or handle it as needed
-        error_log("Error creating user: " . $stmt->error);
+    {
+        $conn = $this->db->getConnection();
+        $conn->begin_transaction();
+
+        try {
+            $stmt = $this->db->prepare("INSERT INTO users (name, surname, email) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $name, $surname, $email);
+            $result = $stmt->execute();
+
+            if (!$result) {
+                throw new Exception("Error inserting user: " . $stmt->error);
+            }
+
+            $stmt->close();
+            $conn->commit();
+            return true;
+        } catch (Exception $e) {
+            $conn->rollback();
+            error_log("Transaction failed: " . $e->getMessage());
+            return false;
+        }
     }
-    $stmt->close();
-    return $result;
 }
-}
+
 ?>

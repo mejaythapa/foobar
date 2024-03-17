@@ -27,6 +27,22 @@ class Database {
         $conn = self::getConnection();
         return $conn->prepare($sql);
     }
-}
 
+    public static function beginTransaction() {
+        $conn = self::getConnection();
+        $conn->autocommit(false);
+    }
+
+    public static function commit() {
+        $conn = self::getConnection();
+        $conn->commit();
+        $conn->autocommit(true);
+    }
+
+    public static function rollback() {
+        $conn = self::getConnection();
+        $conn->rollback();
+        $conn->autocommit(true);
+    }
+}
 ?>

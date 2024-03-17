@@ -2,65 +2,69 @@
 require_once 'Model/userModel.php';
 require_once 'Helper/validationHelper.php';
 
-class userController
+class UserController
 {
     private $userModel;
+    private $db;
 
     public function __construct(Database $db)
     {
         $this->userModel = new UserModel($db);
+        $this->db = $db;
     }
 
     public function processRequest(string $file): void
     {
-        $csv = array_map('str_getcsv', file($file));
-        $errors = [];
-        $unsuccessfulIds = [];
-        $hasErrors = false; // Flag to track if any error occurred
-    
-        foreach ($csv as $index => $row) {
-            if (count($row) !== 3) {
-                $errors[] = "Row $index: Invalid CSV format: " . implode(', ', $row);
-                $hasErrors = true; // Set the flag to true
-                continue;
+        $this->db->beginTransaction();
+
+        try {
+            $csv = array_map('str_getcsv', file($file));
+            $errors = [];
+            $unsuccessfulIds = [];
+
+            foreach ($csv as $index => $row) {
+                if (count($row) !== 3) {
+                    $errors[] = "Row $index: Invalid CSV format: " . implode(', ', $row);
+                    continue;
+                }
+
+                $name = ucfirst(strtolower($row[0]));
+                $surname = ucfirst(strtolower($row[1]));
+                $email = strtolower($row[2]);
+
+                if (!validationHelper::validateEmail($email)) {
+                    $errors[] = "Row $index: Invalid email format: $email";
+                    continue;
+                }
+
+                if (!$this->userModel->createUser($name, $surname, $email)) {
+                    $errors[] = "Row $index: Error inserting user: $name, $surname, $email";
+                    $unsuccessfulIds[] = $index;
+                }
             }
-    
-            $name = ucfirst(strtolower($row[0]));
-            $surname = ucfirst(strtolower($row[1]));
-            $email = strtolower($row[2]);
-    
-            if (!validationHelper::validateEmail($email)) {
-                $errors[] = "Row $index: Invalid email format: $email";
-                $hasErrors = true; // Set the flag to true
-                continue;
+
+            if (!empty($errors)) {
+                echo "Errors:\n";
+                foreach ($errors as $error) {
+                    echo "- $error\n";
+                }
+            } else {
+                echo "All rows imported successfully.\n";
             }
-    
-            if (!$this->userModel->createUser($name, $surname, $email)) {
-                $errors[] = "Row $index: Error inserting user: $name, $surname, $email";
-                $unsuccessfulIds[] = $index;
-                $hasErrors = true; // Set the flag to true
+
+            if (!empty($unsuccessfulIds)) {
+                echo "Unsuccessful IDs:\n";
+                foreach ($unsuccessfulIds as $id) {
+                    echo "- Row $id\n";
+                }
             }
-        }
-    
-        if ($hasErrors) {
-            // Display errors and exit without saving data
-            echo "Errors:\n";
-            foreach ($errors as $error) {
-                echo "- $error\n";
-            }
-            return;
-        }
-    
-        // If no errors occurred, display success message and continue with further processing
-        echo "All rows imported successfully.\n";
-    
-        if (!empty($unsuccessfulIds)) {
-            echo "Unsuccessful IDs:\n";
-            foreach ($unsuccessfulIds as $id) {
-                echo "- Row $id\n";
-            }
+
+            $this->db->commit();
+        } catch (Exception $e) {
+            $this->db->rollback();
+            echo "Transaction failed: " . $e->getMessage() . "\n";
         }
     }
-    
 }
+
 ?>

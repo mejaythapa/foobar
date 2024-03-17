@@ -1,5 +1,4 @@
 <?php
-
 require_once 'Controller/userController.php';
 require_once 'database.php';
 require_once 'Model/userModel.php';
@@ -9,6 +8,7 @@ $options = getopt("u:p:h:", ["file:", "create_table", "dry_run", "help"]);
 $db_host = Database::$db_host;
 $db_user = Database::$db_user;
 $db_password = Database::$db_password;
+
 // Display help message
 if (isset($options['help'])) {
     echo "Usage: php user_upload.php [options]\n";
@@ -26,26 +26,14 @@ if (isset($options['help'])) {
 // Process command line options
 
 if (isset($options['create_table'])) {
-    if (isset($options['h']) && isset($options['u']) && isset($options['p'])) {
-        // Use the provided database credentials
-        $db = new Database($options['h'], $options['u'], $options['p']);
-    } else {
-        // Use the credentials from database.php
-        $db = new Database($db_host, $db_user, $db_password);
-    }
+    $db = dbConnection($options);
     $userModel = new UserModel($db);
     $userModel->createTable();
     exit;
 }
 
-if (isset($options['file'])) {
-    // Connect to the database
-    if (isset($options['h']) && isset($options['u']) && isset($options['p'])) {
-        $db = new Database($options['h'], $options['u'], $options['p']);
-    } else {
-        $db = new Database($db_host, $db_user, $db_password);
-    }
-
+if (isset($options['file'])) {  
+    $db = dbConnection($options);
     // Instantiate the UserController
     $controller = new UserController($db);
 
@@ -53,4 +41,14 @@ if (isset($options['file'])) {
     $controller->processRequest($options['file']);
 }
 
+function dbConnection($options)
+{
+    global $db_host, $db_user, $db_password;
+
+    if (isset($options['h']) && isset($options['u']) && isset($options['p'])) {
+        return new Database($options['h'], $options['u'], $options['p']);
+    } else {
+        return new Database($db_host, $db_user, $db_password);
+    }
+}
 ?>
