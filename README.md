@@ -27,3 +27,11 @@ simillarly to import csv file
 # Foobbar.php logic
 To run foobar logic test run the following command:
 - php foobar.php
+
+# UnitTesting
+install PHPUnit:
+
+If you haven't already installed PHPUnit, you can do so using Composer:
+
+-composer require --dev phpunit/phpunit
+- vendor/bin/phpunit UserControllerTest.php
