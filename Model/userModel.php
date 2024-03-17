@@ -24,5 +24,18 @@ class UserModel {
 
         $this->db->closeConnection(); // Assuming closeConnection() closes the mysqli connection
     }
+
+    public function createUser($name, $surname, $email)
+{
+    $stmt = $this->db->prepare("INSERT INTO users (name, surname, email) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $name, $surname, $email);
+    $result = $stmt->execute();
+    if (!$result) {
+        // Log the error or handle it as needed
+        error_log("Error creating user: " . $stmt->error);
+    }
+    $stmt->close();
+    return $result;
+}
 }
 ?>

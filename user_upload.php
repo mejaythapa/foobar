@@ -24,6 +24,7 @@ if (isset($options['help'])) {
 }
 
 // Process command line options
+
 if (isset($options['create_table'])) {
     if (isset($options['h']) && isset($options['u']) && isset($options['p'])) {
         // Use the provided database credentials
@@ -32,11 +33,24 @@ if (isset($options['create_table'])) {
         // Use the credentials from database.php
         $db = new Database($db_host, $db_user, $db_password);
     }
-    print_r($db);
     $userModel = new UserModel($db);
     $userModel->createTable();
     exit;
 }
 
+if (isset($options['file'])) {
+    // Connect to the database
+    if (isset($options['h']) && isset($options['u']) && isset($options['p'])) {
+        $db = new Database($options['h'], $options['u'], $options['p']);
+    } else {
+        $db = new Database($db_host, $db_user, $db_password);
+    }
+
+    // Instantiate the UserController
+    $controller = new UserController($db);
+
+    // Process the CSV file
+    $controller->processRequest($options['file']);
+}
 
 ?>

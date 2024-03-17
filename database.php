@@ -24,7 +24,9 @@ class Database {
     }
 
     public static function prepare($sql) {
-        return self::$conn->prepare($sql);
+        $conn = self::getConnection();
+        return $conn->prepare($sql);
     }
 }
+
 ?>
