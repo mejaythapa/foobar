@@ -7,11 +7,23 @@ class UserController
     private $userModel;
     private $db;
 
+    /**
+     * UserController constructor.
+     * @param Database $db The database connection instance.
+     */
+
     public function __construct(Database $db)
     {
         $this->userModel = new UserModel($db);
         $this->db = $db;
     }
+      /**
+     * Processes the CSV file containing user data.
+     * Validates the CSV format and user emails, then inserts valid user data into the database.
+     * Rolls back the transaction if any error occurs during processing.
+     *
+     * @param string $file The path to the CSV file.
+     */
 
     public function processRequest(string $file): void
     {
