@@ -38,7 +38,11 @@ if (isset($options['file'])) {
     $controller = new UserController($db);
 
     // Process the CSV file
-    $controller->processRequest($options['file']);
+    if (isset($options['dry_run'])) {
+        $controller->processRequest($options['file'], true);
+    } else {
+        $controller->processRequest($options['file'], false);
+    }
 }
 
 function dbConnection($options)

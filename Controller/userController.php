@@ -25,8 +25,8 @@ class UserController
      * @param string $file The path to the CSV file.
      */
 
-    public function processRequest(string $file): void
-    {
+     public function processRequest(string $file, bool $dryRun = false): void
+     {
         $this->db->beginTransaction();
 
         try {
@@ -48,8 +48,7 @@ class UserController
                     $errors[] = "Row $index: Invalid email format: $email";
                     continue;
                 }
-
-                if (!$this->userModel->createUser($name, $surname, $email)) {
+                if (!$dryRun && !$this->userModel->createUser($name, $surname, $email)) {
                     $errors[] = "Row $index: Error inserting user: $name, $surname, $email";
                     $unsuccessfulIds[] = $index;
                 }
@@ -77,6 +76,30 @@ class UserController
             echo "Transaction failed: " . $e->getMessage() . "\n";
         }
     }
+
+    public function processDryRun(string $file): void
+{
+    $csv = array_map('str_getcsv', file($file));
+
+    foreach ($csv as $index => $row) {
+        if (count($row) !== 3) {
+            echo "Row $index: Invalid CSV format: " . implode(', ', $row) . "\n";
+            continue;
+        }
+
+        $name = ucfirst(strtolower($row[0]));
+        $surname = ucfirst(strtolower($row[1]));
+        $email = strtolower($row[2]);
+
+        if (!validationHelper::validateEmail($email)) {
+            echo "Row $index: Invalid email format: $email\n";
+            continue;
+        }
+
+        echo "Row $index: $name, $surname, $email\n";
+    }
+}
+
 }
 
 ?>
